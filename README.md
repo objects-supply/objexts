@@ -2,7 +2,7 @@
 
 A beaut page for anyone who wants to showcase their side of the inventory.
 
-Inspired by [inventory.example.com](https://inventory.example.com/) — a minimal, typographic timeline of owned objects.
+A minimal, typographic timeline of owned objects.
 
 ### Tech Stack
 
