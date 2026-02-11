@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Marquee } from "@/components/marquee";
 
 export default function Home() {
   return (
@@ -27,8 +28,8 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex items-center justify-center px-6">
-        <div className="max-w-xl text-center">
+      <main className="flex-1 flex flex-col items-center justify-center">
+        <div className="max-w-xl text-center px-6 pt-20 pb-12">
           <h1 className="text-4xl sm:text-5xl font-medium tracking-tight mb-6">
             Your inventory,
             <br />
@@ -53,6 +54,9 @@ export default function Home() {
             </Link>
           </div>
         </div>
+
+        {/* Marquee */}
+        <Marquee />
       </main>
 
       {/* Footer */}
