@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { offeredObjects } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/auth";
 import { and, eq, sql } from "drizzle-orm";
 
 // ─── Types ────────────────────────────────────────────────────
@@ -29,21 +29,6 @@ interface RawProduct {
   price?: string;
   category?: string;
   attributes?: Record<string, string>;
-}
-
-// ─── Auth Check ───────────────────────────────────────────────
-
-async function requireAuth() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  return user;
 }
 
 // ─── Light Scrape (inline, no Playwright dependency) ──────────
@@ -175,7 +160,7 @@ async function productExists(name: string, brandName: string | null) {
  * For full scraping (including DOM extraction), use the CLI pipeline.
  */
 export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
-  await requireAuth();
+  await requireAdmin();
 
   const result: SeedResult = {
     success: true,

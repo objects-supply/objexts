@@ -18,6 +18,7 @@ export const profiles = pgTable("profiles", {
   displayName: text("display_name"),
   bio: text("bio"),
   avatarUrl: text("avatar_url"),
+  role: text("role").notNull().default("user"), // "user" | "admin"
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -144,6 +145,7 @@ export const offeredObjects = pgTable("offered_objects", {
 });
 
 // ─── Types ───────────────────────────────────────────────────
+export type UserRole = "user" | "admin";
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
 export type ObjectItem = typeof objects.$inferSelect;

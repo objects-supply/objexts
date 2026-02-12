@@ -71,6 +71,18 @@ async function main() {
   );
 
   await assertQuery(
+    "profiles.role column exists",
+    () => sql`
+      select column_name
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'profiles'
+        and column_name = 'role'
+    `,
+    (rows) => rows.length === 1,
+  );
+
+  await assertQuery(
     "critical indexes exist",
     () => sql`
       select indexname
@@ -83,10 +95,11 @@ async function main() {
           'idx_object_images_object_id',
           'idx_offered_objects_name',
           'idx_offered_objects_brand_name',
-          'idx_offered_objects_is_active'
+          'idx_offered_objects_is_active',
+          'idx_profiles_role'
         )
     `,
-    (rows) => rows.length === 7,
+    (rows) => rows.length === 8,
   );
 
   console.log("Database verification checks completed.");
