@@ -4,9 +4,9 @@ import Image from "next/image";
 
 const ROW_1 = [
   "/images/placeholder/item-01.png",
-  "/images/placeholder/item-02.png",
-  "/images/placeholder/item-03.png",
-  "/images/placeholder/item-04.png",
+  "/images/placeholder/item-02.webp",
+  "/images/placeholder/item-03.webp",
+  "/images/placeholder/item-04.webp",
   "/images/placeholder/item-05.png",
   "/images/placeholder/item-06.png",
   "/images/placeholder/item-07.png",
@@ -19,13 +19,13 @@ const ROW_1 = [
 const ROW_2 = [
   "/images/placeholder/item-12.png",
   "/images/placeholder/item-13.png",
-  "/images/placeholder/item-14.png",
+  "/images/placeholder/item-14.webp",
   "/images/placeholder/item-15.png",
-  "/images/placeholder/item-16.png",
-  "/images/placeholder/item-17.png",
-  "/images/placeholder/item-18.png",
-  "/images/placeholder/item-19.png",
-  "/images/placeholder/item-20.png",
+  "/images/placeholder/item-16.webp",
+  "/images/placeholder/item-17.webp",
+  "/images/placeholder/item-18.jpg",
+  "/images/placeholder/item-19.webp",
+  "/images/placeholder/item-20.webp",
   "/images/placeholder/item-21.png",
   "/images/placeholder/item-22.png",
 ];
