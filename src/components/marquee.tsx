@@ -23,7 +23,7 @@ const ROW_2 = [
   "/images/placeholder/item-15.png",
   "/images/placeholder/item-16.webp",
   "/images/placeholder/item-17.webp",
-  "/images/placeholder/item-18.jpg",
+  "/images/placeholder/item-18.png",
   "/images/placeholder/item-19.webp",
   "/images/placeholder/item-20.webp",
   "/images/placeholder/item-21.png",
