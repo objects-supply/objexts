@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:verify": "node ./scripts/verify-db.mjs"
+    "db:verify": "node ./scripts/verify-db.mjs",
+    "seed:scrape": "npm run scrape --prefix seed-pipeline --"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

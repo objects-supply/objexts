@@ -1,0 +1,22 @@
+{
+  "name": "seed-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scrape": "tsx src/index.ts",
+    "scrape:dry": "tsx src/index.ts --dry-run"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "drizzle-orm": "^0.45.1",
+    "playwright": "^1.52.0",
+    "postgres": "^3.4.8",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}
