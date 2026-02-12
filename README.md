@@ -99,16 +99,40 @@ Or manage them individually:
 ```
 src/
   app/
-    (auth)/          — Login & signup pages
-    (dashboard)/     — Protected dashboard (object CRUD, settings)
-    u/[username]/    — Public inventory timeline
-  actions/           — Server actions (auth, objects, images, profile)
-  components/        — UI components
+    (auth)/              — Login & signup pages
+    (dashboard)/         — Protected dashboard (object CRUD, settings)
+    (dashboard)/admin/   — Admin-only pages (seed pipeline UI)
+    u/[username]/        — Public inventory timeline
+  actions/               — Server actions (auth, objects, images, profile, seed)
+  components/            — UI components
   lib/
-    db/              — Drizzle schema & database client
-    supabase/        — Supabase client helpers (browser, server, middleware)
-    utils/           — Relative time, slugify helpers
+    auth.ts              — Role-based auth helpers (requireAdmin, hasRole)
+    db/                  — Drizzle schema & database client
+    supabase/            — Supabase client helpers (browser, server, middleware)
+    utils/               — Relative time, slugify helpers
+seed-pipeline/           — Standalone scraping pipeline for seeding offered_objects
 ```
+
+### Roles
+
+Users have a `role` column on their profile (`user` or `admin`). Admins can access `/dashboard/admin/*` and manage offered objects.
+
+To promote a user to admin:
+
+```sql
+UPDATE profiles SET role = 'admin' WHERE username = 'your-username';
+```
+
+### Seed Pipeline
+
+The `seed-pipeline/` directory contains a standalone scraping tool that populates the `offered_objects` catalog. It extracts product data from websites using JSON-LD structured data, with a Playwright DOM fallback.
+
+```bash
+cd seed-pipeline && npm install
+npm run scrape -- --url "https://example.com/product" --dry-run
+```
+
+Admins can also scrape via the UI at `/dashboard/admin/seed`. See [`seed-pipeline/README.md`](seed-pipeline/README.md) for full documentation.
 
 ### Deployment
 
