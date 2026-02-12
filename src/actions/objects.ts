@@ -2,8 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { objects, brands, objectImages } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { objects, brands, offeredObjects } from "@/lib/db/schema";
+import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils/slugify";
 
@@ -233,5 +233,31 @@ export async function getUserBrands() {
   return db.query.brands.findMany({
     where: eq(brands.userId, user.id),
     orderBy: [brands.name],
+  });
+}
+
+export async function searchOfferedObjects(query: string, limit = 8) {
+  const normalizedQuery = query.trim();
+  const safeLimit = Math.min(Math.max(limit, 1), 20);
+
+  if (!normalizedQuery) {
+    return db.query.offeredObjects.findMany({
+      where: eq(offeredObjects.isActive, true),
+      orderBy: [asc(offeredObjects.name)],
+      limit: safeLimit,
+    });
+  }
+
+  return db.query.offeredObjects.findMany({
+    where: and(
+      eq(offeredObjects.isActive, true),
+      or(
+        ilike(offeredObjects.name, `%${normalizedQuery}%`),
+        ilike(offeredObjects.brandName, `%${normalizedQuery}%`),
+        ilike(offeredObjects.category, `%${normalizedQuery}%`)
+      )
+    ),
+    orderBy: [asc(offeredObjects.name)],
+    limit: safeLimit,
   });
 }

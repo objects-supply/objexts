@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createObject, updateObject } from "@/actions/objects";
+import { createObject, searchOfferedObjects, updateObject } from "@/actions/objects";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { ObjectItem } from "@/lib/db/schema";
+import type { ObjectItem, OfferedObject } from "@/lib/db/schema";
 
 interface ObjectFormProps {
   object?: ObjectItem | null;
@@ -26,6 +26,15 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState(object?.name ?? "");
+  const [brandName, setBrandName] = useState(object?.brandName ?? "");
+  const [productUrl, setProductUrl] = useState(object?.productUrl ?? "");
+  const [category, setCategory] = useState(object?.category ?? "");
+  const [description, setDescription] = useState(object?.description ?? "");
+  const [price, setPrice] = useState(object?.price ? String(object.price) : "");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogResults, setCatalogResults] = useState<OfferedObject[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [customFields, setCustomFields] = useState<
     { key: string; value: string }[]
   >(
@@ -38,6 +47,39 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
   );
 
   const isEdit = !!object;
+
+  useEffect(() => {
+    const searchText = catalogSearch.trim();
+    if (searchText.length < 2) {
+      setCatalogResults([]);
+      setCatalogLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = setTimeout(async () => {
+      setCatalogLoading(true);
+      try {
+        const results = await searchOfferedObjects(searchText, 8);
+        if (!cancelled) {
+          setCatalogResults(results);
+        }
+      } catch {
+        if (!cancelled) {
+          setCatalogResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCatalogLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [catalogSearch]);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -83,8 +125,70 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
     setCustomFields(updated);
   }
 
+  function handleCatalogSelect(item: OfferedObject) {
+    setName(item.name);
+    setBrandName(item.brandName ?? "");
+    setProductUrl(item.productUrl ?? "");
+    setCategory(item.category ?? "");
+    setDescription(item.description ?? "");
+    setPrice(item.defaultPrice ? String(item.defaultPrice) : "");
+    setCatalogSearch(
+      item.brandName ? `${item.name} - ${item.brandName}` : item.name
+    );
+    setCatalogResults([]);
+
+    if (item.customFields) {
+      setCustomFields(
+        Object.entries(item.customFields).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      );
+    } else {
+      setCustomFields([]);
+    }
+  }
+
   return (
     <form action={handleSubmit} className="space-y-6 max-w-xl">
+      <div className="space-y-2">
+        <Label htmlFor="catalogSearch">Search offered objects</Label>
+        <Input
+          id="catalogSearch"
+          placeholder="Search by name, brand, or category"
+          value={catalogSearch}
+          onChange={(e) => setCatalogSearch(e.target.value)}
+          autoComplete="off"
+        />
+        {catalogLoading && (
+          <p className="text-xs text-muted-foreground">Searching...</p>
+        )}
+        {!catalogLoading &&
+          catalogSearch.trim().length >= 2 &&
+          catalogResults.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No matching offered objects found.
+            </p>
+          )}
+        {catalogResults.length > 0 && (
+          <div className="rounded-md border bg-background">
+            {catalogResults.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleCatalogSelect(item)}
+                className="block w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/60"
+              >
+                <p className="text-sm font-medium">{item.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {[item.brandName, item.category].filter(Boolean).join(" • ")}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Name + Brand row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -93,7 +197,8 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
             id="brandName"
             name="brandName"
             placeholder="Apple"
-            defaultValue={object?.brandName ?? ""}
+            value={brandName}
+            onChange={(e) => setBrandName(e.target.value)}
             list="brand-suggestions"
           />
           <datalist id="brand-suggestions">
@@ -110,7 +215,8 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
             id="name"
             name="name"
             placeholder="MacBook Pro 16&quot;"
-            defaultValue={object?.name ?? ""}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
           />
         </div>
@@ -124,7 +230,8 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
           name="productUrl"
           type="url"
           placeholder="https://apple.com/macbook-pro"
-          defaultValue={object?.productUrl ?? ""}
+          value={productUrl}
+          onChange={(e) => setProductUrl(e.target.value)}
         />
       </div>
 
@@ -194,7 +301,8 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
             type="number"
             step="0.01"
             placeholder="0.00"
-            defaultValue={object?.price ?? ""}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
           />
         </div>
         <div className="space-y-2">
@@ -203,7 +311,8 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
             id="category"
             name="category"
             placeholder="Tech"
-            defaultValue={object?.category ?? ""}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
           />
         </div>
       </div>
@@ -216,7 +325,8 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
           name="description"
           placeholder="Notes about this object..."
           rows={3}
-          defaultValue={object?.description ?? ""}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 

@@ -27,7 +27,11 @@ export default async function EditObjectPage({
         <ObjectForm object={object} brands={brands} />
         <div>
           <h2 className="text-lg font-medium mb-4">Images</h2>
-          <ImageManager objectId={object.id} images={object.images} />
+          <ImageManager
+            objectId={object.id}
+            images={object.images}
+            coverImageId={object.coverImageId}
+          />
         </div>
       </div>
     </div>
