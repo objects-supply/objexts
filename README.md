@@ -29,7 +29,7 @@ cp .env.local.example .env.local
 3. Create a Supabase project at [supabase.com](https://supabase.com) and:
    - Copy your project URL and anon key into `.env.local`
    - Copy the Postgres connection string into `DATABASE_URL`
-   - Run the migration in `supabase/migrations/0000_create_tables.sql` via the Supabase SQL editor
+  - Run all SQL migrations in `supabase/migrations/` via the Supabase SQL editor (or `supabase db reset` locally)
    - Create a storage bucket called `object-images` (set to public)
 
 4. Run the dev server:
@@ -117,3 +117,26 @@ Deploy to [Vercel](https://vercel.com):
 1. Connect your GitHub repo
 2. Set environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`, `DATABASE_URL`)
 3. Deploy
+
+### Verifying DB changes before production
+
+DB changes are validated in two layers:
+
+1. **Clean replay of migrations**: `supabase db reset` re-applies every migration on a fresh local database.
+2. **Schema safety checks**: `npm run db:verify` validates required tables, indexes, and RLS/policies.
+
+These checks also run automatically in GitHub Actions (`Verify DB Migrations`) on pull requests that touch DB files.
+
+**Run locally before merging a DB change:**
+
+```bash
+supabase start -x logflare,vector,imgproxy
+supabase db reset
+npm run db:verify
+```
+
+**Production fallback mechanism:**
+
+- Use Supabase managed backups / PITR for point-in-time restore.
+- Apply migrations to a staging environment first, then production.
+- Keep migrations forward-only and additive where possible.

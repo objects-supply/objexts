@@ -1,0 +1,50 @@
+name: Verify DB Migrations
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "src/lib/db/**"
+      - "scripts/verify-db.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/db-migrations.yml"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase stack
+        run: supabase start -x logflare,vector,imgproxy
+
+      - name: Re-apply all migrations on a clean DB
+        run: supabase db reset
+
+      - name: Run DB verification checks
+        run: npm run db:verify
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
