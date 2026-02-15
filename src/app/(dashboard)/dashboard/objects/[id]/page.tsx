@@ -26,11 +26,10 @@ export default async function EditObjectPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <ObjectForm object={object} brands={brands} />
         <div>
-          <h2 className="text-lg font-medium mb-4">Images</h2>
+          <h2 className="text-lg font-medium mb-4">Image</h2>
           <ImageManager
-            objectId={object.id}
-            images={object.images}
-            coverImageId={object.coverImageId}
+            inventoryId={object.id}
+            imageUrl={object.imageUrl}
           />
         </div>
       </div>

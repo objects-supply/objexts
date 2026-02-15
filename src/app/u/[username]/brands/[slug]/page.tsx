@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { profiles, objects, brands } from "@/lib/db/schema";
+import { profiles, inventory, brands } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -19,14 +19,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!profile) return { title: "Not Found" };
 
   const brand = await db.query.brands.findFirst({
-    where: and(eq(brands.userId, profile.id), eq(brands.slug, slug)),
+    where: eq(brands.slug, slug),
   });
 
   if (!brand) return { title: "Not Found" };
 
   return {
     title: `${brand.name} — ${profile.displayName || username}'s Inventory`,
-    description: `All ${brand.name} objects in ${username}'s inventory.`,
+    description: `All ${brand.name} items in ${username}'s inventory.`,
   };
 }
 
@@ -40,18 +40,18 @@ export default async function BrandPage({ params }: Props) {
   if (!profile) notFound();
 
   const brand = await db.query.brands.findFirst({
-    where: and(eq(brands.userId, profile.id), eq(brands.slug, slug)),
+    where: eq(brands.slug, slug),
   });
 
   if (!brand) notFound();
 
-  const brandObjects = await db.query.objects.findMany({
+  const brandItems = await db.query.inventory.findMany({
     where: and(
-      eq(objects.userId, profile.id),
-      eq(objects.brandSlug, slug),
-      eq(objects.isPublic, true)
+      eq(inventory.userId, profile.id),
+      eq(inventory.brandSlug, slug),
+      eq(inventory.isPublic, true)
     ),
-    orderBy: [desc(objects.acquiredAt)],
+    orderBy: [desc(inventory.acquiredAt)],
   });
 
   return (
@@ -78,7 +78,7 @@ export default async function BrandPage({ params }: Props) {
         )}
       </div>
 
-      <InventoryTimeline objects={brandObjects} username={username} />
+      <InventoryTimeline objects={brandItems} username={username} />
     </div>
   );
 }
