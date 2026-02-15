@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createObject, searchOfferedObjects, updateObject } from "@/actions/objects";
+import { createObject, searchProducts, updateObject } from "@/actions/objects";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(object?.name ?? "");
   const [brandName, setBrandName] = useState(object?.brandName ?? "");
-  const [productUrl, setProductUrl] = useState(object?.productUrl ?? "");
+  const [productUrl, setProductUrl] = useState(object?.sourceUrl ?? "");
   const [category, setCategory] = useState(object?.category ?? "");
   const [description, setDescription] = useState(object?.description ?? "");
   const [price, setPrice] = useState(object?.price ? String(object.price) : "");
@@ -60,7 +60,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
     const timeoutId = setTimeout(async () => {
       setCatalogLoading(true);
       try {
-        const results = await searchOfferedObjects(searchText, 8);
+        const results = await searchProducts(searchText, 8);
         if (!cancelled) {
           setCatalogResults(results);
         }

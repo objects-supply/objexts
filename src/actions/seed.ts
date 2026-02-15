@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { offeredObjects } from "@/lib/db/schema";
+import { products } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -52,7 +52,7 @@ async function lightScrapeUrl(url: string): Promise<RawProduct[]> {
   }
 
   const html = await response.text();
-  const products: RawProduct[] = [];
+  const rawProducts: RawProduct[] = [];
 
   // Extract JSON-LD blocks using regex (avoid cheerio dependency in main app)
   const jsonLdRegex =
@@ -63,13 +63,13 @@ async function lightScrapeUrl(url: string): Promise<RawProduct[]> {
     try {
       const data = JSON.parse(match[1]);
       const extracted = extractProducts(data, url);
-      products.push(...extracted);
+      rawProducts.push(...extracted);
     } catch {
       // skip malformed JSON-LD
     }
   }
 
-  return products;
+  return rawProducts;
 }
 
 function extractProducts(data: unknown, pageUrl: string): RawProduct[] {
@@ -138,12 +138,12 @@ function extractProducts(data: unknown, pageUrl: string): RawProduct[] {
 
 async function productExists(name: string, brandName: string | null) {
   const conditions = brandName
-    ? and(eq(offeredObjects.name, name), eq(offeredObjects.brandName, brandName))
-    : and(eq(offeredObjects.name, name), sql`${offeredObjects.brandName} IS NULL`);
+    ? and(eq(products.name, name), eq(products.brandName, brandName))
+    : and(eq(products.name, name), sql`${products.brandName} IS NULL`);
 
   const existing = await db
-    .select({ id: offeredObjects.id })
-    .from(offeredObjects)
+    .select({ id: products.id })
+    .from(products)
     .where(conditions!)
     .limit(1);
 
@@ -153,7 +153,7 @@ async function productExists(name: string, brandName: string | null) {
 // ─── Server Action ────────────────────────────────────────────
 
 /**
- * Scrape product data from the given URLs and insert into offered_objects.
+ * Scrape product data from the given URLs and insert into products.
  * Uses light scraping only (JSON-LD extraction) since Playwright
  * cannot run inside a Next.js server action.
  *
@@ -172,14 +172,14 @@ export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
 
   for (const url of urls) {
     try {
-      const products = await lightScrapeUrl(url.trim());
+      const rawProducts = await lightScrapeUrl(url.trim());
 
-      if (products.length === 0) {
+      if (rawProducts.length === 0) {
         result.errors.push({ url, error: "No products found (no JSON-LD data)" });
         continue;
       }
 
-      for (const product of products) {
+      for (const product of rawProducts) {
         const exists = await productExists(
           product.name,
           product.brand ?? null
@@ -204,7 +204,7 @@ export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
           if (!isNaN(num)) cleanPrice = num.toFixed(2);
         }
 
-        await db.insert(offeredObjects).values({
+        await db.insert(products).values({
           name: product.name,
           brandName: product.brand ?? null,
           productUrl: product.url ?? url,

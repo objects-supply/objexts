@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { objects, brands, offeredObjects } from "@/lib/db/schema";
+import { inventory, brands, products } from "@/lib/db/schema";
 import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils/slugify";
@@ -16,15 +16,14 @@ async function getAuthUser() {
 }
 
 async function findOrCreateBrand(
-  userId: string,
   brandName: string,
   brandUrl?: string
 ) {
   const slug = slugify(brandName);
 
-  // Try to find existing brand
+  // Try to find existing brand (global, not user-scoped)
   const existing = await db.query.brands.findFirst({
-    where: and(eq(brands.userId, userId), eq(brands.slug, slug)),
+    where: eq(brands.slug, slug),
   });
 
   if (existing) return existing;
@@ -33,7 +32,6 @@ async function findOrCreateBrand(
   const [newBrand] = await db
     .insert(brands)
     .values({
-      userId,
       name: brandName,
       slug,
       url: brandUrl || null,
@@ -49,7 +47,7 @@ export async function createObject(formData: FormData) {
 
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
-  const productUrl = formData.get("productUrl") as string;
+  const sourceUrl = formData.get("productUrl") as string;
   const description = formData.get("description") as string;
   const acquisitionType =
     (formData.get("acquisitionType") as string) || "Purchased";
@@ -67,7 +65,7 @@ export async function createObject(formData: FormData) {
   let brandSlug: string | null = null;
 
   if (brandName) {
-    const brand = await findOrCreateBrand(user.id, brandName);
+    const brand = await findOrCreateBrand(brandName);
     brandId = brand.id;
     brandSlug = brand.slug;
   }
@@ -82,15 +80,15 @@ export async function createObject(formData: FormData) {
   }
 
   try {
-    const [newObject] = await db
-      .insert(objects)
+    const [newItem] = await db
+      .insert(inventory)
       .values({
         userId: user.id,
         name,
         brandId,
         brandName: brandName || null,
         brandSlug,
-        productUrl: productUrl || null,
+        sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
         reason: reason || null,
@@ -104,7 +102,7 @@ export async function createObject(formData: FormData) {
       .returning();
 
     revalidatePath("/dashboard");
-    return { success: true, object: newObject };
+    return { success: true, object: newItem };
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Failed to create object";
@@ -118,7 +116,7 @@ export async function updateObject(objectId: string, formData: FormData) {
 
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
-  const productUrl = formData.get("productUrl") as string;
+  const sourceUrl = formData.get("productUrl") as string;
   const description = formData.get("description") as string;
   const acquisitionType =
     (formData.get("acquisitionType") as string) || "Purchased";
@@ -137,7 +135,7 @@ export async function updateObject(objectId: string, formData: FormData) {
   let brandSlug: string | null = null;
 
   if (brandName) {
-    const brand = await findOrCreateBrand(user.id, brandName);
+    const brand = await findOrCreateBrand(brandName);
     brandId = brand.id;
     brandSlug = brand.slug;
   }
@@ -153,13 +151,13 @@ export async function updateObject(objectId: string, formData: FormData) {
 
   try {
     await db
-      .update(objects)
+      .update(inventory)
       .set({
         name,
         brandId,
         brandName: brandName || null,
         brandSlug,
-        productUrl: productUrl || null,
+        sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
         reason: reason || null,
@@ -172,7 +170,7 @@ export async function updateObject(objectId: string, formData: FormData) {
         acquiredAt: acquiredAt ? new Date(acquiredAt) : undefined,
         updatedAt: new Date(),
       })
-      .where(and(eq(objects.id, objectId), eq(objects.userId, user.id)));
+      .where(and(eq(inventory.id, objectId), eq(inventory.userId, user.id)));
 
     revalidatePath("/dashboard");
     return { success: true };
@@ -189,8 +187,8 @@ export async function deleteObject(objectId: string) {
 
   try {
     await db
-      .delete(objects)
-      .where(and(eq(objects.id, objectId), eq(objects.userId, user.id)));
+      .delete(inventory)
+      .where(and(eq(inventory.id, objectId), eq(inventory.userId, user.id)));
 
     revalidatePath("/dashboard");
     return { success: true };
@@ -205,12 +203,9 @@ export async function getUserObjects() {
   const user = await getAuthUser();
   if (!user) return [];
 
-  return db.query.objects.findMany({
-    where: eq(objects.userId, user.id),
-    orderBy: [desc(objects.acquiredAt)],
-    with: {
-      images: true,
-    },
+  return db.query.inventory.findMany({
+    where: eq(inventory.userId, user.id),
+    orderBy: [desc(inventory.acquiredAt)],
   });
 }
 
@@ -218,11 +213,8 @@ export async function getObjectById(objectId: string) {
   const user = await getAuthUser();
   if (!user) return null;
 
-  return db.query.objects.findFirst({
-    where: and(eq(objects.id, objectId), eq(objects.userId, user.id)),
-    with: {
-      images: true,
-    },
+  return db.query.inventory.findFirst({
+    where: and(eq(inventory.id, objectId), eq(inventory.userId, user.id)),
   });
 }
 
@@ -230,34 +222,43 @@ export async function getUserBrands() {
   const user = await getAuthUser();
   if (!user) return [];
 
+  // Get brands that the user has items for
+  const userItems = await db.query.inventory.findMany({
+    where: eq(inventory.userId, user.id),
+    columns: { brandId: true },
+  });
+
+  const brandIds = [...new Set(userItems.map(i => i.brandId).filter(Boolean))];
+  if (brandIds.length === 0) return [];
+
   return db.query.brands.findMany({
-    where: eq(brands.userId, user.id),
+    where: or(...brandIds.map(id => eq(brands.id, id!))),
     orderBy: [brands.name],
   });
 }
 
-export async function searchOfferedObjects(query: string, limit = 8) {
+export async function searchProducts(query: string, limit = 8) {
   const normalizedQuery = query.trim();
   const safeLimit = Math.min(Math.max(limit, 1), 20);
 
   if (!normalizedQuery) {
-    return db.query.offeredObjects.findMany({
-      where: eq(offeredObjects.isActive, true),
-      orderBy: [asc(offeredObjects.name)],
+    return db.query.products.findMany({
+      where: eq(products.isActive, true),
+      orderBy: [asc(products.name)],
       limit: safeLimit,
     });
   }
 
-  return db.query.offeredObjects.findMany({
+  return db.query.products.findMany({
     where: and(
-      eq(offeredObjects.isActive, true),
+      eq(products.isActive, true),
       or(
-        ilike(offeredObjects.name, `%${normalizedQuery}%`),
-        ilike(offeredObjects.brandName, `%${normalizedQuery}%`),
-        ilike(offeredObjects.category, `%${normalizedQuery}%`)
+        ilike(products.name, `%${normalizedQuery}%`),
+        ilike(products.brandName, `%${normalizedQuery}%`),
+        ilike(products.category, `%${normalizedQuery}%`)
       )
     ),
-    orderBy: [asc(offeredObjects.name)],
+    orderBy: [asc(products.name)],
     limit: safeLimit,
   });
 }

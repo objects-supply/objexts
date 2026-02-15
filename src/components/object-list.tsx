@@ -15,11 +15,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import type { ObjectItem, ObjectImage } from "@/lib/db/schema";
+import type { ObjectItem } from "@/lib/db/schema";
 
-type ObjectWithImages = ObjectItem & { images: ObjectImage[] };
-
-export function ObjectList({ objects }: { objects: ObjectWithImages[] }) {
+export function ObjectList({ objects }: { objects: ObjectItem[] }) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   async function handleDelete(id: string) {

@@ -66,9 +66,9 @@ function InventoryItem({
             <span className="text-muted-foreground">,&nbsp;</span>
           </>
         )}
-        {obj.productUrl ? (
+        {obj.sourceUrl ? (
           <a
-            href={obj.productUrl}
+            href={obj.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:underline underline-offset-4"
