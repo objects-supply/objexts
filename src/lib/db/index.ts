@@ -2,7 +2,14 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL!;
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+    throw new Error(
+        "DATABASE_URL environment variable is required. " +
+        "Set it in your Vercel project settings or .env.local file."
+    );
+}
 
 // For query purposes (connection pooling)
 const client = postgres(connectionString, { prepare: false });
