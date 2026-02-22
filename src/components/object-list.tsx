@@ -15,9 +15,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import type { ObjectItem } from "@/lib/db/schema";
+import type { ObjectItem, Brand, Product } from "@/lib/db/schema";
 
-export function ObjectList({ objects }: { objects: ObjectItem[] }) {
+type ObjectItemWithRelations = ObjectItem & {
+  brand?: Brand | null;
+  product?: Product | null;
+};
+
+export function ObjectList({ objects }: { objects: ObjectItemWithRelations[] }) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   async function handleDelete(id: string) {
@@ -50,9 +55,9 @@ export function ObjectList({ objects }: { objects: ObjectItem[] }) {
               <TableCell>
                 <div>
                   <div className="font-medium">
-                    {obj.brandName && (
+                    {obj.brand?.name && (
                       <span className="text-muted-foreground">
-                        {obj.brandName},{" "}
+                        {obj.brand.name},{" "}
                       </span>
                     )}
                     {obj.name}

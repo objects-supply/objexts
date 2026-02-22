@@ -15,10 +15,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { ObjectItem, OfferedObject } from "@/lib/db/schema";
+import type { ObjectItem, OfferedObject, Brand, Product } from "@/lib/db/schema";
+
+type ObjectItemWithRelations = ObjectItem & {
+  brand?: Brand | null;
+  product?: Product | null;
+};
 
 interface ObjectFormProps {
-  object?: ObjectItem | null;
+  object?: ObjectItemWithRelations | null;
   brands?: { id: string; name: string }[];
 }
 
@@ -27,7 +32,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(object?.name ?? "");
-  const [brandName, setBrandName] = useState(object?.brandName ?? "");
+  const [brandName, setBrandName] = useState(object?.brand?.name ?? "");
   const [productUrl, setProductUrl] = useState(object?.sourceUrl ?? "");
   const [category, setCategory] = useState(object?.category ?? "");
   const [description, setDescription] = useState(object?.description ?? "");
@@ -126,16 +131,16 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
     setCustomFields(updated);
   }
 
-  function handleCatalogSelect(item: OfferedObject) {
+  function handleCatalogSelect(item: any) {
     setName(item.name);
     setProductId(item.id);
-    setBrandName(item.brandName ?? "");
+    setBrandName(item.brand?.name ?? "");
     setProductUrl(item.productUrl ?? "");
     setCategory(item.category ?? "");
     setDescription(item.description ?? "");
     setPrice(item.defaultPrice ? String(item.defaultPrice) : "");
     setCatalogSearch(
-      item.brandName ? `${item.name} - ${item.brandName}` : item.name
+      item.brand?.name ? `${item.name} - ${item.brand.name}` : item.name
     );
     setCatalogResults([]);
 
@@ -143,7 +148,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
       setCustomFields(
         Object.entries(item.customFields).map(([key, value]) => ({
           key,
-          value,
+          value: String(value),
         }))
       );
     } else {
@@ -184,7 +189,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
               >
                 <p className="text-sm font-medium">{item.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {[item.brandName, item.category].filter(Boolean).join(" • ")}
+                  {[(item as any).brand?.name, item.category].filter(Boolean).join(" • ")}
                 </p>
               </button>
             ))}

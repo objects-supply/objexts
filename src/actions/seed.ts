@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
+import { products, brands } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { and, eq, sql } from "drizzle-orm";
+import { slugify } from "@/lib/utils/slugify";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -136,10 +137,31 @@ function extractProducts(data: unknown, pageUrl: string): RawProduct[] {
 
 // ─── Database Operations ──────────────────────────────────────
 
-async function productExists(name: string, brandName: string | null) {
-  const conditions = brandName
-    ? and(eq(products.name, name), eq(products.brandName, brandName))
-    : and(eq(products.name, name), sql`${products.brandName} IS NULL`);
+async function findOrCreateBrand(brandName: string) {
+  const slug = slugify(brandName);
+
+  const existing = await db.query.brands.findFirst({
+    where: eq(brands.slug, slug),
+  });
+
+  if (existing) return existing;
+
+  const [newBrand] = await db
+    .insert(brands)
+    .values({
+      name: brandName,
+      slug,
+      url: null,
+    })
+    .returning();
+
+  return newBrand;
+}
+
+async function productExists(name: string, brandId: string | null) {
+  const conditions = brandId
+    ? and(eq(products.name, name), eq(products.brandId, brandId))
+    : and(eq(products.name, name), sql`${products.brandId} IS NULL`);
 
   const existing = await db
     .select({ id: products.id })
@@ -180,10 +202,13 @@ export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
       }
 
       for (const product of rawProducts) {
-        const exists = await productExists(
-          product.name,
-          product.brand ?? null
-        );
+        let brandId: string | null = null;
+        if (product.brand) {
+          const brand = await findOrCreateBrand(product.brand);
+          brandId = brand.id;
+        }
+
+        const exists = await productExists(product.name, brandId);
 
         if (exists) {
           result.skipped++;
@@ -206,7 +231,7 @@ export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
 
         await db.insert(products).values({
           name: product.name,
-          brandName: product.brand ?? null,
+          brandId,
           productUrl: product.url ?? url,
           category: product.category ?? null,
           description: product.description ?? null,

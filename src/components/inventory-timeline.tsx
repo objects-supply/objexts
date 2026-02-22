@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { relativeTime } from "@/lib/utils/relative-time";
-import type { ObjectItem } from "@/lib/db/schema";
+import type { ObjectItem, Brand, Product } from "@/lib/db/schema";
+
+type ObjectItemWithRelations = ObjectItem & {
+  brand?: Brand | null;
+  product?: Product | null;
+};
 
 interface InventoryTimelineProps {
-  objects: ObjectItem[];
+  objects: ObjectItemWithRelations[];
   username: string;
 }
 
@@ -34,7 +39,7 @@ function InventoryItem({
   object: obj,
   username,
 }: {
-  object: ObjectItem;
+  object: ObjectItemWithRelations;
   username: string;
 }) {
   return (
@@ -57,7 +62,7 @@ function InventoryItem({
       {(obj.imageUrl || obj.product?.imageUrl) && (
         <dd className="mb-2">
           <img
-            src={obj.product?.imageUrl || obj.imageUrl}
+            src={obj.product?.imageUrl || obj.imageUrl || undefined}
             alt={obj.name}
             className="w-32 h-32 object-cover rounded"
           />

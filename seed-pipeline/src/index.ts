@@ -1,6 +1,12 @@
 import { config } from "dotenv";
 import { resolve } from "node:path";
-config({ path: resolve(import.meta.dirname, "../../.env.development.local") });
+
+const env = process.env.ENV || "development";
+const envFile = env === "production"
+    ? ".env.production.local"
+    : ".env.development.local";
+config({ path: resolve(import.meta.dirname, `../../${envFile}`) });
+
 import { parseArgs } from "node:util";
 import { runPipeline, runProductsPipeline } from "./pipeline.js";
 import type { ScrapeOptions, ProductsOptions } from "./adapters/types.js";

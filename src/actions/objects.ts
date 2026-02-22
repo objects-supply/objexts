@@ -214,6 +214,10 @@ export async function getObjectById(objectId: string) {
 
   return db.query.inventory.findFirst({
     where: and(eq(inventory.id, objectId), eq(inventory.userId, user.id)),
+    with: {
+      brand: true,
+      product: true,
+    },
   });
 }
 
@@ -245,6 +249,9 @@ export async function searchProducts(query: string, limit = 8) {
       where: eq(products.isActive, true),
       orderBy: [asc(products.name)],
       limit: safeLimit,
+      with: {
+        brand: true,
+      },
     });
   }
 
@@ -258,5 +265,8 @@ export async function searchProducts(query: string, limit = 8) {
     ),
     orderBy: [asc(products.name)],
     limit: safeLimit,
+    with: {
+      brand: true,
+    },
   });
 }
