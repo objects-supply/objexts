@@ -9,16 +9,29 @@ import { Button } from "@/components/ui/button";
 
 export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
     const result = await signUp(formData);
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+      return;
     }
+
+    if (result?.success) {
+      setSuccessMessage(
+        result.message ?? "Account created. Check your email to confirm your account."
+      );
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
   }
 
   return (
@@ -43,6 +56,7 @@ export default function SignUpPage() {
               placeholder="yourname"
               pattern="[a-z0-9_-]{3,30}"
               title="3-30 characters, lowercase letters, numbers, hyphens, underscores"
+              disabled={loading || !!successMessage}
               required
             />
             <p className="text-xs text-muted-foreground">
@@ -57,6 +71,7 @@ export default function SignUpPage() {
               name="email"
               type="email"
               placeholder="you@example.com"
+              disabled={loading || !!successMessage}
               required
             />
           </div>
@@ -69,16 +84,29 @@ export default function SignUpPage() {
               type="password"
               placeholder="••••••••"
               minLength={6}
+              disabled={loading || !!successMessage}
               required
             />
           </div>
+
+          {successMessage && (
+            <p className="text-sm text-emerald-600">{successMessage}</p>
+          )}
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || !!successMessage}
+          >
+            {loading
+              ? "Creating account..."
+              : successMessage
+                ? "Check your email"
+                : "Create account"}
           </Button>
         </form>
 

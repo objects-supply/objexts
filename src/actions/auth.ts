@@ -22,7 +22,7 @@ export async function signUp(formData: FormData) {
     };
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -34,7 +34,24 @@ export async function signUp(formData: FormData) {
   });
 
   if (error) {
+    if (error.message.toLowerCase().includes("rate limit")) {
+      return {
+        error:
+          "Too many signup emails were sent. Please wait a few minutes and check your inbox/spam for the previous confirmation email.",
+      };
+    }
     return { error: error.message };
+  }
+
+  // In production, email confirmation is often enabled. Supabase can return a
+  // user with no active session until the email is confirmed.
+  if (!data.session) {
+    return {
+      success: true,
+      requiresEmailConfirmation: true,
+      message:
+        "Account created. Check your email to confirm your account, then log in.",
+    };
   }
 
   redirect("/dashboard");
