@@ -42,6 +42,9 @@ export interface ScrapeOptions {
   /** If true, print results without inserting into the database */
   dryRun?: boolean;
 
+  /** If true, skip downloading and uploading images to storage */
+  skipImages?: boolean;
+
   /** Delay between requests in milliseconds (default: 1500) */
   delay?: number;
 
@@ -58,4 +61,19 @@ export interface ScrapeResult {
   skipped: number;
   errors: Array<{ url: string; error: string }>;
   products: RawProduct[];
+}
+
+// ─── Products Mode Options ────────────────────────────────────
+export interface ProductsOptions {
+  products?: string;
+  productsFile?: string;
+  dryRun?: boolean;
+  skipImages?: boolean;
+  delay?: number;
+}
+
+export interface ProductsResult {
+  inserted: number;
+  skipped: number;
+  errors: Array<{ product: string; error: string }>;
 }

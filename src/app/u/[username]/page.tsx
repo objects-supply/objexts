@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { profiles, inventory } from "@/lib/db/schema";
+import { users, inventory } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { InventoryTimeline } from "@/components/inventory-timeline";
@@ -11,8 +11,8 @@ export default async function PublicProfilePage({
 }) {
   const { username } = await params;
 
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.username, username),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 
   if (!profile) {
@@ -22,6 +22,10 @@ export default async function PublicProfilePage({
   const userItems = await db.query.inventory.findMany({
     where: and(eq(inventory.userId, profile.id), eq(inventory.isPublic, true)),
     orderBy: [desc(inventory.acquiredAt)],
+    with: {
+      brand: true,
+      product: true,
+    },
   });
 
   return (

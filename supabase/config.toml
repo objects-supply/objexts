@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "objects"
+project_id = "objexts"
 
 [api]
 enabled = true
@@ -107,7 +107,7 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
-[storage.buckets.object-images]
+[storage.buckets.product_images]
 public = true
 file_size_limit = "50MiB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]

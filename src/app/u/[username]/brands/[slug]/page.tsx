@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { profiles, inventory, brands } from "@/lib/db/schema";
+import { users, inventory, brands } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,8 +12,8 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username, slug } = await params;
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.username, username),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 
   if (!profile) return { title: "Not Found" };
@@ -33,8 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BrandPage({ params }: Props) {
   const { username, slug } = await params;
 
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.username, username),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 
   if (!profile) notFound();
@@ -48,10 +48,14 @@ export default async function BrandPage({ params }: Props) {
   const brandItems = await db.query.inventory.findMany({
     where: and(
       eq(inventory.userId, profile.id),
-      eq(inventory.brandSlug, slug),
+      eq(inventory.brandId, brand.id),
       eq(inventory.isPublic, true)
     ),
     orderBy: [desc(inventory.acquiredAt)],
+    with: {
+      brand: true,
+      product: true,
+    },
   });
 
   return (

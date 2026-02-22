@@ -10,15 +10,25 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 import { and, eq, sql } from "drizzle-orm";
-import type { OfferedObjectInsert } from "./transformer.js";
+import type { ProductInsert } from "./transformer.js";
 import { log } from "./utils.js";
 
-// ─── Schema (mirrors the main app's offered_objects table) ────
-const offeredObjects = pgTable("offered_objects", {
+// ─── Schema ────
+const brands = pgTable("brands", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  brandName: text("brand_name"),
+  slug: text("slug").notNull(),
+  url: text("url"),
+  imageUrl: text("image_url"),
+});
+
+const products = pgTable("products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  brandId: uuid("brand_id"),
   productUrl: text("product_url"),
+  imageUrl: text("image_url"),
+  color: text("color"),
   category: text("category"),
   description: text("description"),
   defaultPrice: numeric("default_price", { precision: 10, scale: 2 }),
@@ -27,6 +37,8 @@ const offeredObjects = pgTable("offered_objects", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow(),
 });
 
 // ─── Database Connection ──────────────────────────────────────
@@ -63,28 +75,62 @@ export async function closeDb(): Promise<void> {
 
 // ─── Database Operations ──────────────────────────────────────
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 50);
+}
+
 /**
- * Check if a product already exists by name + brand_name.
+ * Get or create a brand by name. Returns the brand ID.
+ */
+async function getOrCreateBrand(brandName: string): Promise<string> {
+  const database = getDb();
+  const slug = slugify(brandName);
+
+  const existing = await database
+    .select({ id: brands.id })
+    .from(brands)
+    .where(eq(brands.slug, slug))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  const inserted = await database
+    .insert(brands)
+    .values({ name: brandName, slug })
+    .returning({ id: brands.id });
+
+  log("debug", `Created brand: "${brandName}" (${slug})`);
+  return inserted[0].id;
+}
+
+/**
+ * Check if a product already exists by name + brand_id.
  */
 async function productExists(
   name: string,
-  brandName: string | null
+  brandId: string | null
 ): Promise<boolean> {
   const database = getDb();
 
-  const conditions = brandName
+  const conditions = brandId
     ? and(
-        eq(offeredObjects.name, name),
-        eq(offeredObjects.brandName, brandName)
+        eq(products.name, name),
+        eq(products.brandId, brandId)
       )
     : and(
-        eq(offeredObjects.name, name),
-        sql`${offeredObjects.brandName} IS NULL`
+        eq(products.name, name),
+        sql`${products.brandId} IS NULL`
       );
 
   const existing = await database
-    .select({ id: offeredObjects.id })
-    .from(offeredObjects)
+    .select({ id: products.id })
+    .from(products)
     .where(conditions!)
     .limit(1);
 
@@ -92,21 +138,72 @@ async function productExists(
 }
 
 /**
- * Insert products into offered_objects, skipping duplicates.
+ * Check if a product exists by name + brand name.
+ * Returns { exists: boolean, hasImage: boolean }
+ */
+export async function checkProductExists(
+  name: string,
+  brandName: string | null
+): Promise<{ exists: boolean; hasImage: boolean }> {
+  const database = getDb();
+  const brandId = brandName ? await getOrCreateBrand(brandName) : null;
+
+  const conditions = brandId
+    ? and(eq(products.name, name), eq(products.brandId, brandId))
+    : and(eq(products.name, name), sql`${products.brandId} IS NULL`);
+
+  const existing = await database
+    .select({ id: products.id, imageUrl: products.imageUrl })
+    .from(products)
+    .where(conditions!)
+    .limit(1);
+
+  if (existing.length === 0) {
+    return { exists: false, hasImage: false };
+  }
+  return { exists: true, hasImage: !!existing[0].imageUrl };
+}
+
+/**
+ * Update image URL for an existing product.
+ */
+export async function updateProductImage(
+  name: string,
+  brandName: string | null,
+  imageUrl: string
+): Promise<void> {
+  const database = getDb();
+  const brandId = brandName ? await getOrCreateBrand(brandName) : null;
+
+  const conditions = brandId
+    ? and(eq(products.name, name), eq(products.brandId, brandId))
+    : and(eq(products.name, name), sql`${products.brandId} IS NULL`);
+
+  await database
+    .update(products)
+    .set({ imageUrl })
+    .where(conditions!);
+
+  log("success", `Updated image for "${name}"`);
+}
+
+/**
+ * Insert products into products table, skipping duplicates.
  * Returns counts of inserted and skipped records.
  */
 export async function upsertProducts(
-  products: OfferedObjectInsert[]
+  items: ProductInsert[]
 ): Promise<{ inserted: number; skipped: number }> {
   const database = getDb();
   let inserted = 0;
   let skipped = 0;
 
-  for (const product of products) {
-    const exists = await productExists(
-      product.name,
-      product.brandName ?? null
-    );
+  for (const product of items) {
+    const brandId = product.brandName
+      ? await getOrCreateBrand(product.brandName)
+      : null;
+
+    const exists = await productExists(product.name, brandId);
 
     if (exists) {
       log("debug", `Skipping duplicate: "${product.name}" by ${product.brandName ?? "unknown"}`);
@@ -114,10 +211,11 @@ export async function upsertProducts(
       continue;
     }
 
-    await database.insert(offeredObjects).values({
+    await database.insert(products).values({
       name: product.name,
-      brandName: product.brandName,
+      brandId: brandId,
       productUrl: product.productUrl,
+      imageUrl: product.imageUrl,
       category: product.category,
       description: product.description,
       defaultPrice: product.defaultPrice ?? undefined,
@@ -141,16 +239,17 @@ export async function upsertProducts(
  * Dry run: check which products would be inserted vs skipped.
  */
 export async function dryRunProducts(
-  products: OfferedObjectInsert[]
+  items: ProductInsert[]
 ): Promise<{ wouldInsert: number; wouldSkip: number }> {
   let wouldInsert = 0;
   let wouldSkip = 0;
 
-  for (const product of products) {
-    const exists = await productExists(
-      product.name,
-      product.brandName ?? null
-    );
+  for (const product of items) {
+    const brandId = product.brandName
+      ? await getOrCreateBrand(product.brandName)
+      : null;
+
+    const exists = await productExists(product.name, brandId);
 
     if (exists) {
       log("debug", `[DRY RUN] Would skip: "${product.name}" by ${product.brandName ?? "unknown"}`);
@@ -167,4 +266,66 @@ export async function dryRunProducts(
   );
 
   return { wouldInsert, wouldSkip };
+}
+
+interface SimpleProductInput {
+  name: string;
+  brandName: string | null;
+  color: string | null;
+  imageUrl: string | null;
+}
+
+/**
+ * Insert a single product into products table.
+ * Creates brand if needed and links via brand_id.
+ * Returns true if inserted, false if skipped (duplicate).
+ */
+export async function upsertProduct(product: SimpleProductInput): Promise<boolean> {
+  const database = getDb();
+
+  const brandId = product.brandName
+    ? await getOrCreateBrand(product.brandName)
+    : null;
+
+  const exists = await productExists(product.name, brandId);
+
+  if (exists) {
+    log("debug", `Skipping duplicate: "${product.name}" by ${product.brandName ?? "unknown"}`);
+    return false;
+  }
+
+  await database.insert(products).values({
+    name: product.name,
+    brandId: brandId,
+    color: product.color,
+    imageUrl: product.imageUrl,
+    isActive: true,
+  });
+
+  const colorInfo = product.color ? ` (${product.color})` : "";
+  const imgInfo = product.imageUrl ? " with image" : " (no image)";
+  log("success", `Inserted: "${product.name}" by ${product.brandName ?? "unknown"}${colorInfo}${imgInfo}`);
+  return true;
+}
+
+/**
+ * Dry run for a single product.
+ * Returns true if would insert, false if would skip.
+ */
+export async function dryRunProduct(product: SimpleProductInput): Promise<boolean> {
+  const brandId = product.brandName
+    ? await getOrCreateBrand(product.brandName)
+    : null;
+
+  const exists = await productExists(product.name, brandId);
+
+  if (exists) {
+    log("debug", `[DRY RUN] Would skip: "${product.name}" by ${product.brandName ?? "unknown"}`);
+    return false;
+  }
+
+  const colorInfo = product.color ? ` (${product.color})` : "";
+  const imgInfo = product.imageUrl ? ` with image: ${product.imageUrl}` : " (no image)";
+  log("success", `[DRY RUN] Would insert: "${product.name}" by ${product.brandName ?? "unknown"}${colorInfo}${imgInfo}`);
+  return true;
 }

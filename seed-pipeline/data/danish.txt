@@ -1,0 +1,26 @@
+# Products to import (format: Name, Brand)
+iphone 13 mini, Apple
+Advantage2, Kinesis
+Expert Wireless Trackball, Kensington
+100ZZ Blue, Yonex
+SoundLInk Mini II Black, Bose
+QuietComfort II Silver Headphones, Bose
+Mono Winged, Luna
+KSO EVO, Vibram
+Storm Racer Black, Patagonia
+Houdini, Patagonia
+Small Wash Pouch, Peak Design
+Tech Pouch, Peak Design
+Mexico 66 ALl Black, Onitsuka Tiger
+ProtectiveClean 4300, Phillips
+Accent 23L, Thule
+Kindle Paperwhite 6th Gen, Amazon
+Aeron, Herman Miller
+X100F, Fujifilm
+Shadow Spirit Cherry, Babolat
+Card Sleeve Second Edition Hazelnut, Bellroy
+Watch Ultra 2 Natural Titanium, Apple
+Vacuum Carry Tumbler SX-KA30-HM (Forest Gray) 300ml, Zojirushi
+100W Universal Adapter GAN, Momax
+inCharge XL 6in1 Travel Cable, RollingSquare
+Camera Leash Tokyo Black Edition, Peak Design

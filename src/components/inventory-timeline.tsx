@@ -53,15 +53,26 @@ function InventoryItem({
         {relativeTime(obj.acquiredAt)}
       </dd>
 
+      {/* Image */}
+      {(obj.imageUrl || obj.product?.imageUrl) && (
+        <dd className="mb-2">
+          <img
+            src={obj.product?.imageUrl || obj.imageUrl}
+            alt={obj.name}
+            className="w-32 h-32 object-cover rounded"
+          />
+        </dd>
+      )}
+
       {/* Brand + Product Name */}
       <dd className="text-sm">
-        {obj.brandName && obj.brandSlug && (
+        {obj.brand && (
           <>
             <Link
-              href={`/u/${username}/brands/${obj.brandSlug}`}
+              href={`/u/${username}/brands/${obj.brand.slug}`}
               className="hover:underline underline-offset-4"
             >
-              {obj.brandName}
+              {obj.brand.name}
             </Link>
             <span className="text-muted-foreground">,&nbsp;</span>
           </>

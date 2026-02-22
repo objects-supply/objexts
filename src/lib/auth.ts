@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { profiles } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { UserRole } from "@/lib/db/schema";
 
@@ -16,8 +16,8 @@ export async function getAuthProfile() {
 
   if (!user) return null;
 
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.id, user.id),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.id, user.id),
   });
 
   return profile ?? null;

@@ -32,6 +32,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
   const [category, setCategory] = useState(object?.category ?? "");
   const [description, setDescription] = useState(object?.description ?? "");
   const [price, setPrice] = useState(object?.price ? String(object.price) : "");
+  const [productId, setProductId] = useState<string | null>(object?.productId ?? null);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogResults, setCatalogResults] = useState<OfferedObject[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
@@ -127,6 +128,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
 
   function handleCatalogSelect(item: OfferedObject) {
     setName(item.name);
+    setProductId(item.id);
     setBrandName(item.brandName ?? "");
     setProductUrl(item.productUrl ?? "");
     setCategory(item.category ?? "");
@@ -151,6 +153,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-6 max-w-xl">
+      {productId && <input type="hidden" name="productId" value={productId} />}
       <div className="space-y-2">
         <Label htmlFor="catalogSearch">Search offered objects</Label>
         <Input

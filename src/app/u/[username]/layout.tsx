@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
-import { profiles } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
@@ -11,8 +11,8 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.username, username),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 
   if (!profile) return { title: "Not Found" };
@@ -38,8 +38,8 @@ export default async function PublicProfileLayout({ params, children }: Props) {
   const { username } = await params;
 
   // Verify user exists
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.username, username),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 
   if (!profile) {

@@ -1,0 +1,40 @@
+# All product URLs for seeding
+# Combined from: tech-electronics, lifestyle-design, fashion-apparel, home-goods
+
+# Tech & Electronics
+https://www.apple.com/shop/product/MWP22AM/A/airpods-pro
+https://www.apple.com/shop/product/MK2C3AM/A/magic-keyboard
+https://www.apple.com/shop/product/MK0C2LL/A/magic-mouse
+https://www.apple.com/shop/product/MXNK2LL/A/pro-display-xdr
+https://www.sony.com/en/SonyInfo/design/stories/WH-1000XM5/
+https://www.bose.com/en_us/products/headphones/noise_cancelling_headphones/quietcomfort-headphones.html
+https://www.logitech.com/en-us/products/mice/mx-master-3s.html
+https://www.anker.com/products/a2147
+https://store.google.com/product/pixel_buds_pro
+
+# Lifestyle & Design
+https://www.aesop.com/us/p/skin/hand-and-body/resurrection-aromatique-hand-wash/
+https://www.aesop.com/us/p/skin/hand-and-body/reverence-aromatique-hand-balm/
+https://www.muji.us/products/gel-ink-ballpoint-pen-0-5mm-black-b8a1
+https://www.muji.us/products/polypropylene-file-box-standard-a4-wide-ljn1
+https://www.hay.dk/en/shopping/about-a-chair-aac-22
+https://www.braun.com/en-us/male-grooming/shavers/series-9/series-9-pro
+https://www.rimowa.com/us/en/luggage/cabin/original/92553004.html
+https://www.snow-peak.com/products/titanium-single-wall-cup-450
+
+# Fashion & Apparel
+https://www.birkenstock.com/us/arizona-birko-flor/arizona-core-birkoflor-0-eva-u.html
+https://www.commonprojects.com/products/original-achilles-low-white
+https://www.patagonia.com/product/mens-better-sweater-fleece-jacket/25528.html
+https://www.arcteryx.com/us/en/shop/mens/atom-lt-hoody
+https://www.allbirds.com/products/mens-wool-runners
+https://www.filson.com/bags-luggage/briefcases/original-briefcase.html
+https://www.redwingshoes.com/heritage/mens/Iron-Ranger-08111.html
+
+# Home Goods
+https://www.lecreuset.com/round-dutch-oven/LS2501.html
+https://www.staub-online.com/en_US/cocotte-round/
+https://www.yeti.com/drinkware/tumblers/rambler-20-oz-tumbler.html
+https://www.fellow.com/products/stagg-ekg-electric-pour-over-kettle
+https://www.chemexcoffeemaker.com/six-cup-classic-series-coffeemaker.html
+https://www.tokyobike.com/product/tokyobike-bisou.html

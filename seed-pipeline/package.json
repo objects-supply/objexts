@@ -8,6 +8,8 @@
     "scrape:dry": "tsx src/index.ts --dry-run"
   },
   "dependencies": {
+    "@imgly/background-removal-node": "^1.4.5",
+    "@supabase/supabase-js": "^2.49.4",
     "cheerio": "^1.0.0",
     "drizzle-orm": "^0.45.1",
     "playwright": "^1.52.0",

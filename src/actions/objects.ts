@@ -46,6 +46,7 @@ export async function createObject(formData: FormData) {
   if (!user) return { error: "Not authenticated" };
 
   const name = formData.get("name") as string;
+  const productId = formData.get("productId") as string | null;
   const brandName = formData.get("brandName") as string;
   const sourceUrl = formData.get("productUrl") as string;
   const description = formData.get("description") as string;
@@ -62,12 +63,10 @@ export async function createObject(formData: FormData) {
   if (!name) return { error: "Name is required" };
 
   let brandId: string | null = null;
-  let brandSlug: string | null = null;
 
   if (brandName) {
     const brand = await findOrCreateBrand(brandName);
     brandId = brand.id;
-    brandSlug = brand.slug;
   }
 
   let customFields: Record<string, string> | null = null;
@@ -84,10 +83,9 @@ export async function createObject(formData: FormData) {
       .insert(inventory)
       .values({
         userId: user.id,
+        productId: productId || null,
         name,
         brandId,
-        brandName: brandName || null,
-        brandSlug,
         sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
@@ -132,12 +130,10 @@ export async function updateObject(objectId: string, formData: FormData) {
   if (!name) return { error: "Name is required" };
 
   let brandId: string | null = null;
-  let brandSlug: string | null = null;
 
   if (brandName) {
     const brand = await findOrCreateBrand(brandName);
     brandId = brand.id;
-    brandSlug = brand.slug;
   }
 
   let customFields: Record<string, string> | null = null;
@@ -155,8 +151,7 @@ export async function updateObject(objectId: string, formData: FormData) {
       .set({
         name,
         brandId,
-        brandName: brandName || null,
-        brandSlug,
+        
         sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
@@ -206,6 +201,10 @@ export async function getUserObjects() {
   return db.query.inventory.findMany({
     where: eq(inventory.userId, user.id),
     orderBy: [desc(inventory.acquiredAt)],
+    with: {
+      brand: true,
+      product: true,
+    },
   });
 }
 
@@ -254,7 +253,6 @@ export async function searchProducts(query: string, limit = 8) {
       eq(products.isActive, true),
       or(
         ilike(products.name, `%${normalizedQuery}%`),
-        ilike(products.brandName, `%${normalizedQuery}%`),
         ilike(products.category, `%${normalizedQuery}%`)
       )
     ),

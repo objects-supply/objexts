@@ -12,8 +12,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-// ─── Profiles ────────────────────────────────────────────────
-export const profiles = pgTable("profiles", {
+// ─── Users ───────────────────────────────────────────────────
+export const users = pgTable("users", {
   id: uuid("id").primaryKey(), // matches auth.users.id
   username: text("username").unique().notNull(),
   displayName: text("display_name"),
@@ -25,7 +25,7 @@ export const profiles = pgTable("profiles", {
     .notNull(),
 });
 
-export const profilesRelations = relations(profiles, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   inventory: many(inventory),
   userProducts: many(userProducts),
 }));
@@ -35,7 +35,6 @@ export const brands = pgTable(
   "brands",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id").references(() => profiles.id, { onDelete: "set null" }), // legacy, nullable
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     url: text("url"),
@@ -59,7 +58,6 @@ export const products = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
     name: text("name").notNull(),
-    brandName: text("brand_name"), // denormalized for display
     productUrl: text("product_url"),
     imageUrl: text("image_url"),
     category: text("category"),
@@ -93,10 +91,9 @@ export const userProducts = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "cascade" }),
     brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
     name: text("name").notNull(),
-    brandName: text("brand_name"),
     productUrl: text("product_url"),
     imageUrl: text("image_url"),
     category: text("category"),
@@ -117,9 +114,9 @@ export const userProducts = pgTable(
 );
 
 export const userProductsRelations = relations(userProducts, ({ one, many }) => ({
-  user: one(profiles, {
+  user: one(users, {
     fields: [userProducts.userId],
-    references: [profiles.id],
+    references: [users.id],
   }),
   brand: one(brands, {
     fields: [userProducts.brandId],
@@ -135,13 +132,11 @@ export const inventory = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "cascade" }),
     productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
     userProductId: uuid("user_product_id").references(() => userProducts.id, { onDelete: "set null" }),
     brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
     name: text("name").notNull(),
-    brandName: text("brand_name"),
-    brandSlug: text("brand_slug"),
     sourceUrl: text("source_url"),
     imageUrl: text("image_url"),
     description: text("description"),
@@ -172,9 +167,9 @@ export const inventory = pgTable(
 );
 
 export const inventoryRelations = relations(inventory, ({ one, many }) => ({
-  profile: one(profiles, {
+  profile: one(users, {
     fields: [inventory.userId],
-    references: [profiles.id],
+    references: [users.id],
   }),
   product: one(products, {
     fields: [inventory.productId],
@@ -193,8 +188,11 @@ export const inventoryRelations = relations(inventory, ({ one, many }) => ({
 // ─── Types ───────────────────────────────────────────────────
 export type UserRole = "user" | "admin";
 export type UserProductStatus = "pending" | "approved" | "rejected";
-export type Profile = typeof profiles.$inferSelect;
-export type NewProfile = typeof profiles.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+// Legacy alias
+export type Profile = User;
+export type NewProfile = NewUser;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type UserProduct = typeof userProducts.$inferSelect;

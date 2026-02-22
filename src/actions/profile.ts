@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { profiles } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -29,13 +29,13 @@ export async function updateProfile(formData: FormData) {
 
   try {
     await db
-      .update(profiles)
+      .update(users)
       .set({
         ...(displayName !== undefined && { displayName }),
         ...(bio !== undefined && { bio }),
         ...(username && { username }),
       })
-      .where(eq(profiles.id, user.id));
+      .where(eq(users.id, user.id));
 
     revalidatePath("/dashboard/settings");
     return { success: true };
@@ -57,8 +57,8 @@ export async function getProfile() {
 
   if (!user) return null;
 
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.id, user.id),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.id, user.id),
   });
 
   return profile ?? null;
