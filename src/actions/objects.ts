@@ -277,9 +277,10 @@ export async function searchProducts(query: string, limit = 8) {
 }
 
 export async function createProduct(formData: FormData) {
-  await requireAdmin();
-
+  const profile = await requireAdmin();
   const supabase = await createClient();
+
+  console.log("Creating product as user:", profile.id, "role:", profile.role);
 
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
@@ -309,6 +310,7 @@ export async function createProduct(formData: FormData) {
   }
 
   try {
+    console.log("Inserting product with brand_id:", brandId);
     const { data: newProduct, error } = await supabase
       .from("products")
       .insert({
@@ -326,7 +328,8 @@ export async function createProduct(formData: FormData) {
       .single();
 
     if (error) {
-      return { error: error.message };
+      console.error("Product insert error:", error);
+      return { error: `${error.message} (code: ${error.code})` };
     }
 
     revalidatePath("/dashboard");
