@@ -280,7 +280,9 @@ export async function createProduct(formData: FormData) {
   const profile = await requireAdmin();
   const supabase = await createClient();
 
-  console.log("Creating product as user:", profile.id, "role:", profile.role);
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log("Creating product - profile:", profile.id, "role:", profile.role);
+  console.log("Supabase client user:", user?.id);
 
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
