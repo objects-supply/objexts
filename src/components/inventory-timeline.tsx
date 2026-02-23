@@ -25,13 +25,13 @@ export function InventoryTimeline({
   }
 
   return (
-    <ul className="space-y-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
       {objects.map((obj) => (
-        <li key={obj.id}>
+        <div key={obj.id}>
           <InventoryItem object={obj} username={username} />
-        </li>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
 
@@ -43,43 +43,29 @@ function InventoryItem({
   username: string;
 }) {
   return (
-    <dl className="[&_dt]:opacity-40 not-last:[&_dd]:mb-1">
-      {/* Reason (optional) */}
-      {obj.reason && (
-        <>
-          <dt className="text-xs">Reason</dt>
-          <dd className="text-xs opacity-40">{obj.reason}</dd>
-        </>
-      )}
-
-      {/* Acquisition type */}
-      <dt className="text-xs">{obj.acquisitionType}</dt>
-      <dd className="text-xs opacity-40 mb-2">
-        {relativeTime(obj.acquiredAt)}
-      </dd>
-
+    <div className="flex flex-col">
       {/* Image */}
       {(obj.imageUrl || obj.product?.imageUrl) && (
-        <dd className="mb-2">
+        <div className="mb-6">
           <img
             src={obj.product?.imageUrl || obj.imageUrl || undefined}
             alt={obj.name}
-            className="w-32 h-32 object-cover rounded"
+            className="w-full aspect-[4/5] object-contain rounded bg-muted/10 p-4"
           />
-        </dd>
+        </div>
       )}
 
       {/* Brand + Product Name */}
-      <dd className="text-sm">
+      <div className="text-sm mb-2">
         {obj.brand && (
           <>
             <Link
               href={`/u/${username}/brands/${obj.brand.slug}`}
-              className="hover:underline underline-offset-4"
+              className="hover:underline underline-offset-4 text-muted-foreground"
             >
               {obj.brand.name}
             </Link>
-            <span className="text-muted-foreground">,&nbsp;</span>
+            <br />
           </>
         )}
         {obj.sourceUrl ? (
@@ -95,9 +81,21 @@ function InventoryItem({
           <span>{obj.name}</span>
         )}
         {obj.quantity && obj.quantity > 1 && (
-          <span className="text-muted-foreground">, {obj.quantity}x</span>
+          <span className="text-muted-foreground"> ({obj.quantity}x)</span>
         )}
-      </dd>
-    </dl>
+      </div>
+
+      {/* Acquisition type + date */}
+      <div className="text-xs text-muted-foreground">
+        {obj.acquisitionType} · {relativeTime(obj.acquiredAt)}
+      </div>
+
+      {/* Reason (optional) */}
+      {obj.reason && (
+        <div className="text-xs text-muted-foreground mt-1">
+          {obj.reason}
+        </div>
+      )}
+    </div>
   );
 }

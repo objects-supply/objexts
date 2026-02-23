@@ -29,7 +29,7 @@ export default async function PublicProfilePage({
   });
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4">
       <h1 className="text-lg font-medium tracking-tight mb-10">Inventory</h1>
       <InventoryTimeline objects={userItems} username={username} />
     </div>
