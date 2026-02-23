@@ -82,3 +82,31 @@ export async function deleteInventoryImage(inventoryId: string) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export async function uploadProductImage(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const file = formData.get("file") as File;
+  if (!file) return { error: "No file provided" };
+
+  const fileExt = file.name.split(".").pop();
+  const productNameSlug = formData.get("productNameSlug") as string || "product";
+  const fileName = `products/${productNameSlug}/${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("product_images")
+    .upload(fileName, file);
+
+  if (uploadError) return { error: uploadError.message };
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("product_images").getPublicUrl(fileName);
+
+  return { success: true, url: publicUrl };
+}

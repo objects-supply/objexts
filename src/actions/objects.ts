@@ -6,6 +6,7 @@ import { inventory, brands, products } from "@/lib/db/schema";
 import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils/slugify";
+import { requireAdmin } from "@/lib/auth";
 
 async function getAuthUser() {
   const supabase = await createClient();
@@ -269,4 +270,58 @@ export async function searchProducts(query: string, limit = 8) {
       brand: true,
     },
   });
+}
+
+export async function createProduct(formData: FormData) {
+  await requireAdmin();
+
+  const name = formData.get("name") as string;
+  const brandName = formData.get("brandName") as string;
+  const productUrl = formData.get("productUrl") as string;
+  const imageUrl = formData.get("imageUrl") as string;
+  const category = formData.get("category") as string;
+  const description = formData.get("description") as string;
+  const defaultPrice = formData.get("defaultPrice") as string;
+  const customFieldsRaw = formData.get("customFields") as string;
+
+  if (!name) return { error: "Name is required" };
+
+  let brandId: string | null = null;
+
+  if (brandName) {
+    const brand = await findOrCreateBrand(brandName);
+    brandId = brand.id;
+  }
+
+  let customFields: Record<string, string> | null = null;
+  if (customFieldsRaw) {
+    try {
+      customFields = JSON.parse(customFieldsRaw);
+    } catch {
+      // ignore invalid JSON
+    }
+  }
+
+  try {
+    const [newProduct] = await db
+      .insert(products)
+      .values({
+        name,
+        brandId,
+        productUrl: productUrl || null,
+        imageUrl: imageUrl || null,
+        category: category || null,
+        description: description || null,
+        defaultPrice: defaultPrice || null,
+        customFields,
+        isActive: true,
+      })
+      .returning();
+
+    revalidatePath("/dashboard");
+    return { success: true, product: newProduct };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to create product";
+    return { error: message };
+  }
 }

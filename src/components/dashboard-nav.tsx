@@ -5,14 +5,16 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/lib/db/schema";
 
 const navItems = [
   { href: "/dashboard", label: "Objects" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
-export function DashboardNav({ userEmail }: { userEmail: string }) {
+export function DashboardNav({ userEmail, userRole }: { userEmail: string; userRole: UserRole }) {
   const pathname = usePathname();
+  const isAdmin = userRole === "admin";
 
   return (
     <header className="border-b border-border">
@@ -36,11 +38,27 @@ export function DashboardNav({ userEmail }: { userEmail: string }) {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/dashboard/products/new"
+                className={cn(
+                  "text-sm transition-colors",
+                  pathname === "/dashboard/products/new"
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Create Product
+              </Link>
+            )}
           </nav>
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-xs text-muted-foreground hidden sm:inline">
+          <span className={cn(
+            "text-xs text-muted-foreground hidden sm:inline",
+            isAdmin && "decoration-red-500 underline underline-offset-4"
+          )}>
             {userEmail}
           </span>
           <form action={signOut}>
