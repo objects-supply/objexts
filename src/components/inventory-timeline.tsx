@@ -25,7 +25,7 @@ export function InventoryTimeline({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
       {objects.map((obj) => (
         <div key={obj.id}>
           <InventoryItem object={obj} username={username} />
@@ -46,11 +46,11 @@ function InventoryItem({
     <div className="flex flex-col">
       {/* Image */}
       {(obj.imageUrl || obj.product?.imageUrl) && (
-        <div className="mb-3">
+        <div className="mb-4">
           <img
             src={obj.product?.imageUrl || obj.imageUrl || undefined}
             alt={obj.name}
-            className="w-full aspect-square object-cover rounded"
+            className="w-full aspect-square object-contain rounded bg-muted/10"
           />
         </div>
       )}
