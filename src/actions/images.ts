@@ -28,14 +28,14 @@ export async function uploadInventoryImage(inventoryId: string, formData: FormDa
   const fileName = `${user.id}/${inventoryId}/${Date.now()}.${fileExt}`;
 
   const { error: uploadError } = await supabase.storage
-    .from("product-images")
+    .from("product_images")
     .upload(fileName, file);
 
   if (uploadError) return { error: uploadError.message };
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from("product-images").getPublicUrl(fileName);
+  } = supabase.storage.from("product_images").getPublicUrl(fileName);
 
   // Update the inventory item's imageUrl
   await db
@@ -66,9 +66,9 @@ export async function deleteInventoryImage(inventoryId: string) {
   if (!item.imageUrl) return { error: "No image to delete" };
 
   // Extract storage path from URL
-  const urlParts = item.imageUrl.split("/product-images/");
+  const urlParts = item.imageUrl.split("/product_images/");
   if (urlParts.length === 2) {
-    await supabase.storage.from("product-images").remove([urlParts[1]]);
+    await supabase.storage.from("product_images").remove([urlParts[1]]);
   }
 
   await db
