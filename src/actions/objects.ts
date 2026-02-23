@@ -29,15 +29,19 @@ async function findOrCreateBrand(
 
   if (existing) return existing;
 
-  // Create new brand
-  const [newBrand] = await db
-    .insert(brands)
-    .values({
+  // Create new brand using Supabase client for RLS
+  const supabase = await createClient();
+  const { data: newBrand, error } = await supabase
+    .from("brands")
+    .insert({
       name: brandName,
       slug,
       url: brandUrl || null,
     })
-    .returning();
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
 
   return newBrand;
 }
@@ -275,6 +279,8 @@ export async function searchProducts(query: string, limit = 8) {
 export async function createProduct(formData: FormData) {
   await requireAdmin();
 
+  const supabase = await createClient();
+
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
   const productUrl = formData.get("productUrl") as string;
@@ -303,20 +309,25 @@ export async function createProduct(formData: FormData) {
   }
 
   try {
-    const [newProduct] = await db
-      .insert(products)
-      .values({
+    const { data: newProduct, error } = await supabase
+      .from("products")
+      .insert({
         name,
-        brandId,
-        productUrl: productUrl || null,
-        imageUrl: imageUrl || null,
+        brand_id: brandId,
+        product_url: productUrl || null,
+        image_url: imageUrl || null,
         category: category || null,
         description: description || null,
-        defaultPrice: defaultPrice || null,
-        customFields,
-        isActive: true,
+        default_price: defaultPrice || null,
+        custom_fields: customFields,
+        is_active: true,
       })
-      .returning();
+      .select()
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
 
     revalidatePath("/dashboard");
     return { success: true, product: newProduct };
