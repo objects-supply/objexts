@@ -139,7 +139,11 @@ Admins can also scrape via the UI at `/dashboard/admin/seed`. See [`seed-pipelin
 Deploy to [Vercel](https://vercel.com):
 
 1. Connect your GitHub repo
-2. Set environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`, `DATABASE_URL`)
+2. Set environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
+   - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
+   - `DATABASE_URL` - Postgres connection string (use connection pooler with transaction mode, port 6543)
 3. Deploy
 
 ### Verifying DB changes before production
