@@ -3,7 +3,8 @@ import { profiles, inventory, brands } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { InventoryTimeline } from "@/components/inventory-timeline";
+import { ItemGridClient } from "@/components/item-grid-client";
+import { toItem } from "@/types/item";
 import type { Metadata } from "next";
 
 type Props = {
@@ -48,37 +49,42 @@ export default async function BrandPage({ params }: Props) {
   const brandItems = await db.query.inventory.findMany({
     where: and(
       eq(inventory.userId, profile.id),
-      eq(inventory.brandSlug, slug),
+      eq(inventory.brandId, brand.id),
       eq(inventory.isPublic, true)
     ),
     orderBy: [desc(inventory.acquiredAt)],
+    with: { brand: true },
   });
 
-  return (
-    <div>
-      <div className="mb-10">
-        <Link
-          href={`/u/${username}`}
-          className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-        >
-          &larr; Back to inventory
-        </Link>
-        <h1 className="text-lg font-medium tracking-tight mt-3">
-          {brand.name}
-        </h1>
-        {brand.url && (
-          <a
-            href={brand.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-          >
-            {brand.url}
-          </a>
-        )}
-      </div>
+  const items = brandItems.map(toItem);
 
-      <InventoryTimeline objects={brandItems} username={username} />
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-6 py-16">
+        <div className="mb-10">
+          <Link
+            href={`/u/${username}`}
+            className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          >
+            &larr; Back to inventory
+          </Link>
+          <h1 className="text-xl font-semibold tracking-tight mt-3">
+            {brand.name}
+          </h1>
+          {brand.url && (
+            <a
+              href={brand.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            >
+              {brand.url}
+            </a>
+          )}
+        </div>
+
+        <ItemGridClient items={items} />
+      </div>
     </div>
   );
 }
