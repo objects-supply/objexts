@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
-import { profiles, inventory } from "@/lib/db/schema";
+import { users, inventory } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { InventoryTimeline } from "@/components/inventory-timeline";
+import { PublicProfileClient } from "@/components/public-profile-client";
+import { toItem } from "@/types/item";
 
 export default async function PublicProfilePage({
   params,
@@ -11,8 +12,8 @@ export default async function PublicProfilePage({
 }) {
   const { username } = await params;
 
-  const profile = await db.query.profiles.findFirst({
-    where: eq(profiles.username, username),
+  const profile = await db.query.users.findFirst({
+    where: eq(users.username, username),
   });
 
   if (!profile) {
@@ -22,12 +23,21 @@ export default async function PublicProfilePage({
   const userItems = await db.query.inventory.findMany({
     where: and(eq(inventory.userId, profile.id), eq(inventory.isPublic, true)),
     orderBy: [desc(inventory.acquiredAt)],
+    with: { brand: true },
   });
 
+  const items = userItems.map(toItem);
+
   return (
-    <div>
-      <h1 className="text-lg font-medium tracking-tight mb-10">Inventory</h1>
-      <InventoryTimeline objects={userItems} username={username} />
-    </div>
+    <PublicProfileClient
+      profile={{
+        id: profile.id,
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        avatarUrl: profile.avatarUrl,
+      }}
+      items={items}
+    />
   );
 }

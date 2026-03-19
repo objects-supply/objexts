@@ -47,6 +47,7 @@ export async function createObject(formData: FormData) {
 
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
+  const imageUrl = formData.get("imageUrl") as string;
   const sourceUrl = formData.get("productUrl") as string;
   const description = formData.get("description") as string;
   const acquisitionType =
@@ -57,17 +58,17 @@ export async function createObject(formData: FormData) {
   const currency = (formData.get("currency") as string) || "USD";
   const category = formData.get("category") as string;
   const acquiredAt = formData.get("acquiredAt") as string;
+  const isPublicRaw = formData.get("isPublic") as string;
+  const isPublic = isPublicRaw === "false" ? false : true;
   const customFieldsRaw = formData.get("customFields") as string;
 
   if (!name) return { error: "Name is required" };
 
   let brandId: string | null = null;
-  let brandSlug: string | null = null;
 
   if (brandName) {
     const brand = await findOrCreateBrand(brandName);
     brandId = brand.id;
-    brandSlug = brand.slug;
   }
 
   let customFields: Record<string, string> | null = null;
@@ -86,8 +87,7 @@ export async function createObject(formData: FormData) {
         userId: user.id,
         name,
         brandId,
-        brandName: brandName || null,
-        brandSlug,
+        imageUrl: imageUrl || null,
         sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
@@ -97,6 +97,7 @@ export async function createObject(formData: FormData) {
         currency,
         category: category || null,
         customFields,
+        isPublic,
         acquiredAt: acquiredAt ? new Date(acquiredAt) : new Date(),
       })
       .returning();
@@ -132,12 +133,10 @@ export async function updateObject(objectId: string, formData: FormData) {
   if (!name) return { error: "Name is required" };
 
   let brandId: string | null = null;
-  let brandSlug: string | null = null;
 
   if (brandName) {
     const brand = await findOrCreateBrand(brandName);
     brandId = brand.id;
-    brandSlug = brand.slug;
   }
 
   let customFields: Record<string, string> | null = null;
@@ -155,8 +154,6 @@ export async function updateObject(objectId: string, formData: FormData) {
       .set({
         name,
         brandId,
-        brandName: brandName || null,
-        brandSlug,
         sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
@@ -206,6 +203,7 @@ export async function getUserObjects() {
   return db.query.inventory.findMany({
     where: eq(inventory.userId, user.id),
     orderBy: [desc(inventory.acquiredAt)],
+    with: { brand: true },
   });
 }
 
@@ -215,6 +213,7 @@ export async function getObjectById(objectId: string) {
 
   return db.query.inventory.findFirst({
     where: and(eq(inventory.id, objectId), eq(inventory.userId, user.id)),
+    with: { brand: true },
   });
 }
 
@@ -244,6 +243,7 @@ export async function searchProducts(query: string, limit = 8) {
   if (!normalizedQuery) {
     return db.query.products.findMany({
       where: eq(products.isActive, true),
+      with: { brand: true },
       orderBy: [asc(products.name)],
       limit: safeLimit,
     });
@@ -254,10 +254,10 @@ export async function searchProducts(query: string, limit = 8) {
       eq(products.isActive, true),
       or(
         ilike(products.name, `%${normalizedQuery}%`),
-        ilike(products.brandName, `%${normalizedQuery}%`),
         ilike(products.category, `%${normalizedQuery}%`)
       )
     ),
+    with: { brand: true },
     orderBy: [asc(products.name)],
     limit: safeLimit,
   });

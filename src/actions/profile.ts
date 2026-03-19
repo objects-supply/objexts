@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { profiles } from "@/lib/db/schema";
+import { users as profiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -57,7 +57,7 @@ export async function getProfile() {
 
   if (!user) return null;
 
-  const profile = await db.query.profiles.findFirst({
+  const profile = await db.query.users.findFirst({
     where: eq(profiles.id, user.id),
   });
 
