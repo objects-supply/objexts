@@ -23,7 +23,7 @@ export default async function PublicProfilePage({
   const userItems = await db.query.inventory.findMany({
     where: and(eq(inventory.userId, profile.id), eq(inventory.isPublic, true)),
     orderBy: [desc(inventory.acquiredAt)],
-    with: { brand: true },
+    with: { brand: true, product: { with: { brand: true } } },
   });
 
   const items = userItems.map(toItem);

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { ObjectItem, OfferedObject } from "@/lib/db/schema";
+import type { ObjectItem, OfferedObject, Brand } from "@/lib/db/schema";
 
 interface ObjectFormProps {
   object?: ObjectItem | null;
@@ -33,7 +33,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
   const [description, setDescription] = useState(object?.description ?? "");
   const [price, setPrice] = useState(object?.price ? String(object.price) : "");
   const [catalogSearch, setCatalogSearch] = useState("");
-  const [catalogResults, setCatalogResults] = useState<OfferedObject[]>([]);
+  const [catalogResults, setCatalogResults] = useState<(OfferedObject & { brand: Brand | null })[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [customFields, setCustomFields] = useState<
     { key: string; value: string }[]
@@ -125,15 +125,15 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
     setCustomFields(updated);
   }
 
-  function handleCatalogSelect(item: OfferedObject) {
+  function handleCatalogSelect(item: OfferedObject & { brand: Brand | null }) {
     setName(item.name);
-    setBrandName(item.brandName ?? "");
+    setBrandName(item.brand?.name ?? "");
     setProductUrl(item.productUrl ?? "");
     setCategory(item.category ?? "");
     setDescription(item.description ?? "");
     setPrice(item.defaultPrice ? String(item.defaultPrice) : "");
     setCatalogSearch(
-      item.brandName ? `${item.name} - ${item.brandName}` : item.name
+      item.brand?.name ? `${item.name} - ${item.brand.name}` : item.name
     );
     setCatalogResults([]);
 
@@ -181,7 +181,7 @@ export function ObjectForm({ object, brands = [] }: ObjectFormProps) {
               >
                 <p className="text-sm font-medium">{item.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {[item.brandName, item.category].filter(Boolean).join(" • ")}
+                  {[item.brand?.name, item.category].filter(Boolean).join(" • ")}
                 </p>
               </button>
             ))}

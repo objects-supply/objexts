@@ -203,7 +203,7 @@ export async function getUserObjects() {
   return db.query.inventory.findMany({
     where: eq(inventory.userId, user.id),
     orderBy: [desc(inventory.acquiredAt)],
-    with: { brand: true },
+    with: { brand: true, product: { with: { brand: true } } },
   });
 }
 

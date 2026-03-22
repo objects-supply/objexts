@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
+import { products, brands } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -136,10 +136,19 @@ function extractProducts(data: unknown, pageUrl: string): RawProduct[] {
 
 // ─── Database Operations ──────────────────────────────────────
 
-async function productExists(name: string, brandName: string | null) {
-  const conditions = brandName
-    ? and(eq(products.name, name), eq(products.brandName, brandName))
-    : and(eq(products.name, name), sql`${products.brandName} IS NULL`);
+async function findOrCreateBrand(name: string): Promise<string | null> {
+  if (!name) return null;
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const existing = await db.select({ id: brands.id }).from(brands).where(eq(brands.slug, slug)).limit(1);
+  if (existing.length > 0) return existing[0].id;
+  const inserted = await db.insert(brands).values({ name, slug }).returning({ id: brands.id });
+  return inserted[0].id;
+}
+
+async function productExists(name: string, brandId: string | null) {
+  const conditions = brandId
+    ? and(eq(products.name, name), eq(products.brandId, brandId))
+    : and(eq(products.name, name), sql`${products.brandId} IS NULL`);
 
   const existing = await db
     .select({ id: products.id })
@@ -180,10 +189,8 @@ export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
       }
 
       for (const product of rawProducts) {
-        const exists = await productExists(
-          product.name,
-          product.brand ?? null
-        );
+        const brandId = product.brand ? await findOrCreateBrand(product.brand) : null;
+        const exists = await productExists(product.name, brandId);
 
         if (exists) {
           result.skipped++;
@@ -206,7 +213,7 @@ export async function scrapeAndSeed(urls: string[]): Promise<SeedResult> {
 
         await db.insert(products).values({
           name: product.name,
-          brandName: product.brand ?? null,
+          brandId: brandId ?? undefined,
           productUrl: product.url ?? url,
           category: product.category ?? null,
           description: product.description ?? null,

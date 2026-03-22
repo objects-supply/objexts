@@ -1,5 +1,0 @@
-ALTER TABLE brands
-  ADD COLUMN IF NOT EXISTS image_url TEXT;
-
-ALTER TABLE objects
-  ADD COLUMN IF NOT EXISTS image_url TEXT;

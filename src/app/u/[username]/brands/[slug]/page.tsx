@@ -53,7 +53,7 @@ export default async function BrandPage({ params }: Props) {
       eq(inventory.isPublic, true)
     ),
     orderBy: [desc(inventory.acquiredAt)],
-    with: { brand: true },
+    with: { brand: true, product: { with: { brand: true } } },
   });
 
   const items = brandItems.map(toItem);

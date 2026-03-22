@@ -58,7 +58,6 @@ export const products = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
     name: text("name").notNull(),
-    brandName: text("brand_name"), // denormalized for display
     productUrl: text("product_url"),
     imageUrl: text("image_url"),
     category: text("category"),

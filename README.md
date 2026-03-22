@@ -30,7 +30,7 @@ cp .env.local.example .env.local
    - Copy your project URL and anon key into `.env.local`
    - Copy the Postgres connection string into `DATABASE_URL`
   - Run all SQL migrations in `supabase/migrations/` via the Supabase SQL editor (or `supabase db reset` locally)
-   - Create a storage bucket called `object-images` (set to public)
+   - Create a storage bucket called `product_images` (set to public)
 
 4. Run the dev server:
 
