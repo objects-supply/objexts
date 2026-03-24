@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { db } from "@/lib/db";
 import { inventory, brands, products } from "@/lib/db/schema";
 import { eq, and, desc, asc, ilike, or } from "drizzle-orm";
@@ -42,12 +43,16 @@ async function findOrCreateBrand(
 }
 
 export async function createObject(formData: FormData) {
-  const user = await getAuthUser();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
   const name = formData.get("name") as string;
   const brandName = formData.get("brandName") as string;
   const imageUrl = formData.get("imageUrl") as string;
+  const imageFile = formData.get("imageFile");
   const sourceUrl = formData.get("productUrl") as string;
   const description = formData.get("description") as string;
   const acquisitionType =
@@ -81,13 +86,37 @@ export async function createObject(formData: FormData) {
   }
 
   try {
+    const inventoryId = crypto.randomUUID();
+    let resolvedImageUrl = imageUrl || null;
+
+    if (imageFile instanceof File && imageFile.size > 0) {
+      const storageAdmin = createAdminClient();
+      const fileExt = imageFile.name.split(".").pop() || "jpg";
+      const fileName = `${user.id}/${inventoryId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await storageAdmin.storage
+        .from("product_images")
+        .upload(fileName, imageFile);
+
+      if (uploadError) {
+        return { error: uploadError.message };
+      }
+
+      const {
+        data: { publicUrl },
+      } = storageAdmin.storage.from("product_images").getPublicUrl(fileName);
+
+      resolvedImageUrl = publicUrl;
+    }
+
     const [newItem] = await db
       .insert(inventory)
       .values({
+        id: inventoryId,
         userId: user.id,
         name,
         brandId,
-        imageUrl: imageUrl || null,
+        imageUrl: resolvedImageUrl,
         sourceUrl: sourceUrl || null,
         description: description || null,
         acquisitionType,
@@ -103,6 +132,8 @@ export async function createObject(formData: FormData) {
       .returning();
 
     revalidatePath("/dashboard");
+    revalidatePath("/[username]", "page");
+    revalidatePath("/u/[username]", "page");
     return { success: true, object: newItem };
   } catch (error: unknown) {
     const message =
