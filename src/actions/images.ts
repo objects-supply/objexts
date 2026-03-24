@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { db } from "@/lib/db";
 import { inventory } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -26,8 +27,9 @@ export async function uploadInventoryImage(inventoryId: string, formData: FormDa
 
   const fileExt = file.name.split(".").pop();
   const fileName = `${user.id}/${inventoryId}/${Date.now()}.${fileExt}`;
+  const storageAdmin = createAdminClient();
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await storageAdmin.storage
     .from("product_images")
     .upload(fileName, file);
 
@@ -35,7 +37,7 @@ export async function uploadInventoryImage(inventoryId: string, formData: FormDa
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from("product_images").getPublicUrl(fileName);
+  } = storageAdmin.storage.from("product_images").getPublicUrl(fileName);
 
   // Update the inventory item's imageUrl
   await db
@@ -64,11 +66,12 @@ export async function deleteInventoryImage(inventoryId: string) {
 
   if (!item) return { error: "Item not found" };
   if (!item.imageUrl) return { error: "No image to delete" };
+  const storageAdmin = createAdminClient();
 
   // Extract storage path from URL
   const urlParts = item.imageUrl.split("/product_images/");
   if (urlParts.length === 2) {
-    await supabase.storage.from("product_images").remove([urlParts[1]]);
+    await storageAdmin.storage.from("product_images").remove([urlParts[1]]);
   }
 
   await db

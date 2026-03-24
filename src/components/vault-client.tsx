@@ -38,7 +38,7 @@ export function VaultClient({ items, username }: VaultClientProps) {
       toast.error("Set a username in settings to get a shareable link.");
       return;
     }
-    const link = `${window.location.origin}/u/${username}`;
+    const link = `${window.location.origin}/${username}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     toast.success("Link copied!", { description: link });

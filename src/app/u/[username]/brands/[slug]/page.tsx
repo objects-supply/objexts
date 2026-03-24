@@ -60,15 +60,15 @@ export default async function BrandPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        <div className="mb-10">
+      <div className="px-5 py-6 sm:px-8 sm:py-8 lg:px-12">
+        <div className="mb-8 border-b border-border/60 pb-6 sm:mb-10">
           <Link
-            href={`/u/${username}`}
-            className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            href={`/${username}`}
+            className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground/70 transition-colors hover:text-foreground"
           >
             &larr; Back to inventory
           </Link>
-          <h1 className="text-xl font-semibold tracking-tight mt-3">
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
             {brand.name}
           </h1>
           {brand.url && (
@@ -76,7 +76,7 @@ export default async function BrandPage({ params }: Props) {
               href={brand.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              className="mt-2 inline-block text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {brand.url}
             </a>

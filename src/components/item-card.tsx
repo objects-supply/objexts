@@ -15,25 +15,28 @@ export function ItemCard({ item, index, onClick }: ItemCardProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, delay: index * 0.04 }}
-      className="group cursor-pointer relative"
+      className="group relative cursor-pointer"
       onClick={() => onClick(item)}
     >
-      <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-8 sm:p-10 relative">
+      <div className="relative aspect-square overflow-hidden bg-secondary/55 p-5 sm:p-6 lg:p-7">
         {item.imageUrl ? (
           <img
             src={item.imageUrl}
             alt={item.name}
-            className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-[1.05]"
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.04]"
             loading="lazy"
           />
         ) : (
-          <div className="text-muted-foreground text-sm">No image</div>
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            No image
+          </div>
         )}
 
-        {/* Hover bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-foreground translate-y-full group-hover:translate-y-0 transition-transform duration-300 px-3 py-2.5">
-          <p className="text-primary-foreground text-xs font-medium leading-tight">
-            <span className="text-primary-foreground/60">{item.brand}</span>{" "}
+        <div className="absolute inset-x-0 bottom-0 translate-y-full bg-foreground px-3 py-2.5 transition-transform duration-300 group-hover:translate-y-0">
+          <p className="text-xs font-medium leading-tight text-primary-foreground">
+            <span className="text-primary-foreground/60">
+              {item.brand || "Object"}
+            </span>{" "}
             {item.name}
           </p>
         </div>

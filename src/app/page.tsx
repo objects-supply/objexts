@@ -67,7 +67,7 @@ export default function Home() {
               asChild
               className="rounded-full px-6 h-11 text-sm font-medium gap-2"
             >
-              <Link href="/u/demo">
+              <Link href="/demo">
                 <Eye className="w-4 h-4" />
                 See Example
               </Link>
